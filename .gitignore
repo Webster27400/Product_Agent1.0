@@ -1,0 +1,5 @@
+# Ignoruj plik z kluczami
+groqAPIkeys.txt
+
+# Ignoruj folder z sekretami dla Streamlit
+.streamlit/

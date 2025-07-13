@@ -1,0 +1,9 @@
+KlientID,DataZgloszenia,Produkt,TypZgloszenia,Tresc,Sentyment
+Klient1,2025-07-01,Produkt X,Bug,"Aplikacja zawiesza się przy próbie eksportu do PDF. To blokuje nam pracę.",Negatywny
+Klient2,2025-07-02,Produkt Y,Pytanie,"Jak mogę zintegrować Wasze API z naszym systemem CRM? Dokumentacja jest niejasna.",Neutralny
+Klient3,2025-07-03,Produkt X,Prośba o funkcję,"Brakuje nam możliwości dodawania własnych tagów do projektów. To by bardzo pomogło.",Pozytywny
+Klient4,2025-07-05,Produkt Z,Bug,"Po ostatniej aktualizacji zniknęła opcja sortowania po dacie. To krytyczne dla naszych raportów.",Negatywny
+Klient5,2025-07-06,Produkt X,Pochwała,"Chciałem tylko powiedzieć, że nowa funkcja dashboardu jest rewelacyjna! Gratulacje.",Pozytywny
+Klient6,2025-07-07,Produkt Y,Prośba o funkcję,"Czy moglibyście dodać logowanie dwuskładnikowe (2FA)? To dla nas kwestia bezpieczeństwa.",Neutralny
+Klient7,2025-07-08,Produkt Z,Pytanie,"Gdzie znajdę cennik dla planu Enterprise? Na stronie go nie widzę.",Neutralny
+Klient8,2025-07-09,Produkt X,Bug,"Wersja mobilna na iOS często się zawiesza przy ładowaniu większych plików.",Negatywny

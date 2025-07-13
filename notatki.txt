@@ -1,0 +1,10 @@
+Notatki ze spotkania brainstormingowego - Produkt Z - 09.07.2025
+
+Główny wniosek: Klienci Enterprise narzekają na brak możliwości tworzenia zaawansowanych raportów. To jest dla nich kluczowa blokada.
+
+Pomysły na rozwiązanie:
+1. Stworzenie dedykowanego modułu do raportowania.
+2. Integracja z zewnętrznym narzędziem BI, np. Power BI.
+3. Dodanie opcji eksportu surowych danych do analizy.
+
+Decyzja: Musimy pilnie przeanalizować koszt i czas wdrożenia opcji nr 2.
