@@ -1,7 +1,8 @@
 streamlit
-llama-index
 pandas
-llama-index-llms-groq
-llama-index-embeddings-huggingface
 torch
 accelerate
+llama-index
+llama-index-llms-groq
+llama-index-embeddings-huggingface
+llama-index-tools-duckduckgo
