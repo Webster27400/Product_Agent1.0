@@ -14,8 +14,8 @@ else:
     st.stop()
 
 # --- Interfejs Aplikacji Streamlit ---
-st.title("💡 Agent Automatyk (Wersja Premium)")
-st.markdown("Agent, który analizuje dane i zapisuje dla Ciebie raporty.")
+st.title("💡 Agent Geneza (Wersja Ostateczna)")
+st.markdown("Rozpocznij rozmowę z agentem.")
 
 language = st.sidebar.radio(
     "Wybierz język odpowiedzi:",
@@ -23,12 +23,12 @@ language = st.sidebar.radio(
 )
 
 # --- Dynamiczna Konfiguracja Agenta ---
-prompt_pl = "Jesteś polskim, proaktywnym asystentem menedżera produktu. Twoim celem jest analiza danych i identyfikacja ryzyk oraz szans. Zawsze, bezwzględnie odpowiadaj TYLKO w języku polskim."
-prompt_en = "You are a proactive assistant to a product manager. Your goal is to analyze data and identify risks and opportunities. Always, without exception, respond ONLY in English."
+# OSTATECZNA POPRAWKA INSTRUKCJI
+prompt_pl = "Jesteś polskim, proaktywnym asystentem. Twoim zadaniem jest analiza danych i identyfikacja ryzyk oraz szans. Zawsze, bezwzględnie odpowiadaj TYLKO w języku polskim, nawet jeśli pytanie lub dane są w innym języku."
+prompt_en = "You are a proactive assistant to a product manager. Your goal is to analyze data and identify risks and opportunities. Always, without exception, respond ONLY in English, even if the user's question or the source data is in another language."
 
 system_prompt = prompt_pl if language == 'Polski' else prompt_en
 
-# POPRAWKA 1: Używamy znacznie potężniejszego modelu Llama 3 70B
 Settings.llm = Groq(model="llama3-70b-8192", system_prompt=system_prompt)
 Settings.embed_model = "local:BAAI/bge-small-en-v1.5"
 
@@ -44,33 +44,26 @@ def load_index():
 index = load_index()
 query_engine = index.as_query_engine(llm=Settings.llm)
 
-# --- Tworzenie narzędzi z BARDZO PRECYZYJNYMI OPISAMI ---
-
+# --- Tworzenie narzędzi ---
 def get_todays_date(fake_arg: str = "") -> str:
-    """Zwraca dzisiejszą datę."""
+    """Użyj tego narzędzia TYLKO, gdy pytanie dotyczy dzisiejszej daty."""
     return datetime.now().strftime("%Y-%m-%d")
 
-# POPRAWKA 2: Bardziej precyzyjny opis narzędzia do zapisu
-def save_report(filename: str, content: str) -> str:
-    """Użyj tego narzędzia do zapisania tekstu (content) w pliku o podanej nazwie (filename).
-    Tego narzędzia należy użyć DOPIERO WTEDY, gdy masz już treść do zapisania, uzyskaną za pomocą innego narzędzia."""
-    with open(filename, "w", encoding="utf-8") as f:
-        f.write(content)
-    return f"Raport został pomyślnie zapisany w pliku {filename}."
+date_tool = FunctionTool.from_defaults(fn=get_todays_date, name="narzedzie_do_sprawdzania_daty", description="To narzędzie służy do sprawdzania dzisiejszej daty.")
 
-date_tool = FunctionTool.from_defaults(fn=get_todays_date, name="narzedzie_daty", description="Zwraca dzisiejszą datę.")
-# POPRAWKA 2: Bardziej precyzyjny opis narzędzia do analizy
 document_tool = QueryEngineTool(
     query_engine=query_engine,
     metadata=ToolMetadata(
         name="analizator_dokumentow_klientow",
-        description="Użyj tego narzędzia, aby uzyskać lub podsumować informacje z dokumentów o feedbacku od klientów, zanim użyjesz innych narzędzi.",
+        description=(
+            "Użyj tego narzędzia do wszystkich pytań i poleceń dotyczących opinii klientów, produktów, zgłoszeń, bugów, sentymentu, notatek ze spotkań i plików CSV. "
+            "To narzędzie potrafi analizować, podsumowywać i wyszukiwać informacje w dostarczonych dokumentach."
+        ),
     ),
 )
-file_writer_tool = FunctionTool.from_defaults(fn=save_report, name="narzedzie_do_zapisu_raportu", description="Służy do zapisywania raportów w plikach tekstowych.")
 
 # --- Tworzenie Agenta ---
-agent = ReActAgent.from_tools(tools=[date_tool, document_tool, file_writer_tool], llm=Settings.llm, verbose=True)
+agent = ReActAgent.from_tools(tools=[date_tool, document_tool], llm=Settings.llm, verbose=True, max_iterations=10)
 
 # --- Logika Czatu ---
 if "messages" not in st.session_state:
