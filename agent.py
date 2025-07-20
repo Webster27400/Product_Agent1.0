@@ -7,35 +7,32 @@ import os
 from datetime import datetime
 
 # --- Konfiguracja klucza API ---
-# Wczytujemy klucz z menedżera sekretów Streamlit
 if "GROQ_API_KEY" in st.secrets:
     os.environ["GROQ_API_KEY"] = st.secrets["GROQ_API_KEY"]
 else:
-    st.error("Nie znaleziono klucza GROQ_API_KEY w sekretach. Dodaj go w ustawieniach wdrożenia.")
+    st.error("Nie znaleziono klucza GROQ_API_KEY w sekretach.")
     st.stop()
 
 # --- Interfejs Aplikacji Streamlit ---
-st.title("💡 Agent Geneza (Wersja Finalna)")
-st.markdown("Rozpocznij rozmowę z agentem.")
+st.title("💡 Agent Automatyk (Wersja Premium)")
+st.markdown("Agent, który analizuje dane i zapisuje dla Ciebie raporty.")
 
-# ✅ Funkcjonalność: Przełącznik języka w panelu bocznym
 language = st.sidebar.radio(
     "Wybierz język odpowiedzi:",
     ('Polski', 'Angielski')
 )
 
-# ✅ Funkcjonalność: Dynamiczne instrukcje dla AI
-prompt_pl = "Jesteś proaktywnym asystentem menedżera produktu. Twoim celem jest nie tylko odpowiadać na pytania, ale także identyfikować potencjalne ryzyka i szanse. Odpowiadaj zawsze po polsku, w przyjaznym, ale profesjonalnym tonie."
-prompt_en = "You are a proactive assistant to a product manager. Your goal is not only to answer questions but also to identify potential risks and opportunities. Always respond in English, in a friendly yet professional tone."
+# --- Dynamiczna Konfiguracja Agenta ---
+prompt_pl = "Jesteś polskim, proaktywnym asystentem menedżera produktu. Twoim celem jest analiza danych i identyfikacja ryzyk oraz szans. Zawsze, bezwzględnie odpowiadaj TYLKO w języku polskim."
+prompt_en = "You are a proactive assistant to a product manager. Your goal is to analyze data and identify risks and opportunities. Always, without exception, respond ONLY in English."
 
 system_prompt = prompt_pl if language == 'Polski' else prompt_en
 
-# ✅ Funkcjonalność: Połączenie z potężnym modelem AI (Groq) z dynamiczną instrukcją
-Settings.llm = Groq(model="llama3-8b-8192", system_prompt=system_prompt)
-# ✅ Funkcjonalność: Użycie lokalnego modelu do "rozumienia" tekstu
+# POPRAWKA 1: Używamy znacznie potężniejszego modelu Llama 3 70B
+Settings.llm = Groq(model="llama3-70b-8192", system_prompt=system_prompt)
 Settings.embed_model = "local:BAAI/bge-small-en-v1.5"
 
-# ✅ Funkcjonalność: Optymalizacja - Wczytywanie danych tylko raz
+# --- Ładowanie danych (cachowane) ---
 @st.cache_resource
 def load_index():
     with st.spinner("Wczytuję i indeksuję dane (tylko raz)..."):
@@ -45,34 +42,37 @@ def load_index():
         return index
 
 index = load_index()
-
-# Tworzymy silnik zapytań z aktualnym modelem LLM
 query_engine = index.as_query_engine(llm=Settings.llm)
 
-# ✅ Funkcjonalność: Dwa różne narzędzia dla agenta
-# Narzędzie 1: Data
+# --- Tworzenie narzędzi z BARDZO PRECYZYJNYMI OPISAMI ---
+
 def get_todays_date(fake_arg: str = "") -> str:
-    """Zwraca dzisiejszą datę w formacie ROK-MIESIĄC-DZIEŃ."""
+    """Zwraca dzisiejszą datę."""
     return datetime.now().strftime("%Y-%m-%d")
 
-date_tool = FunctionTool.from_defaults(fn=get_todays_date, name="narzedzie_daty", description="To narzędzie zwraca dzisiejszą datę.")
+# POPRAWKA 2: Bardziej precyzyjny opis narzędzia do zapisu
+def save_report(filename: str, content: str) -> str:
+    """Użyj tego narzędzia do zapisania tekstu (content) w pliku o podanej nazwie (filename).
+    Tego narzędzia należy użyć DOPIERO WTEDY, gdy masz już treść do zapisania, uzyskaną za pomocą innego narzędzia."""
+    with open(filename, "w", encoding="utf-8") as f:
+        f.write(content)
+    return f"Raport został pomyślnie zapisany w pliku {filename}."
 
-# Narzędzie 2: Dokumenty
+date_tool = FunctionTool.from_defaults(fn=get_todays_date, name="narzedzie_daty", description="Zwraca dzisiejszą datę.")
+# POPRAWKA 2: Bardziej precyzyjny opis narzędzia do analizy
 document_tool = QueryEngineTool(
     query_engine=query_engine,
     metadata=ToolMetadata(
         name="analizator_dokumentow_klientow",
-        description=(
-            "To narzędzie służy do analizy i podsumowywania dokumentów zawierających opinie i zgłoszenia od klientów. "
-            "Użyj go, jeśli pytanie dotyczy feedbacku, bugów, próśb o nowe funkcje, notatek ze spotkań, plików CSV lub podsumowania informacji."
-        ),
+        description="Użyj tego narzędzia, aby uzyskać lub podsumować informacje z dokumentów o feedbacku od klientów, zanim użyjesz innych narzędzi.",
     ),
 )
+file_writer_tool = FunctionTool.from_defaults(fn=save_report, name="narzedzie_do_zapisu_raportu", description="Służy do zapisywania raportów w plikach tekstowych.")
 
-# ✅ Funkcjonalność: Zaawansowany agent typu ReAct, który decyduje, którego narzędzia użyć
-agent = ReActAgent.from_tools(tools=[date_tool, document_tool], llm=Settings.llm, verbose=True)
+# --- Tworzenie Agenta ---
+agent = ReActAgent.from_tools(tools=[date_tool, document_tool, file_writer_tool], llm=Settings.llm, verbose=True)
 
-# ✅ Funkcjonalność: Interfejs w stylu czatu z historią rozmowy
+# --- Logika Czatu ---
 if "messages" not in st.session_state:
     st.session_state.messages = []
 
