@@ -3,6 +3,8 @@ from llama_index.core import VectorStoreIndex, SimpleDirectoryReader, Settings
 from llama_index.llms.groq import Groq
 from llama_index.core.agent import ReActAgent
 from llama_index.core.tools import QueryEngineTool, ToolMetadata, FunctionTool
+# NOWY IMPORT
+from llama_index.core.memory import ChatMemoryBuffer
 import os
 from datetime import datetime
 
@@ -14,8 +16,8 @@ else:
     st.stop()
 
 # --- Interfejs Aplikacji Streamlit ---
-st.title("💡 Agent Geneza (Wersja Ostateczna)")
-st.markdown("Rozpocznij rozmowę z agentem.")
+st.title("🧠 Agent z Pamięcią")
+st.markdown("Ten agent pamięta kontekst naszej rozmowy.")
 
 language = st.sidebar.radio(
     "Wybierz język odpowiedzi:",
@@ -23,9 +25,8 @@ language = st.sidebar.radio(
 )
 
 # --- Dynamiczna Konfiguracja Agenta ---
-# OSTATECZNA POPRAWKA INSTRUKCJI
-prompt_pl = "Jesteś polskim, proaktywnym asystentem. Twoim zadaniem jest analiza danych i identyfikacja ryzyk oraz szans. Zawsze, bezwzględnie odpowiadaj TYLKO w języku polskim, nawet jeśli pytanie lub dane są w innym języku."
-prompt_en = "You are a proactive assistant to a product manager. Your goal is to analyze data and identify risks and opportunities. Always, without exception, respond ONLY in English, even if the user's question or the source data is in another language."
+prompt_pl = "Jesteś polskim, proaktywnym asystentem. Zawsze, bezwzględnie odpowiadaj TYLKO w języku polskim, nawet jeśli pytanie lub dane są w innym języku."
+prompt_en = "You are a proactive assistant. Always, without exception, respond ONLY in English, even if the user's question or the source data is in another language."
 
 system_prompt = prompt_pl if language == 'Polski' else prompt_en
 
@@ -55,15 +56,23 @@ document_tool = QueryEngineTool(
     query_engine=query_engine,
     metadata=ToolMetadata(
         name="analizator_dokumentow_klientow",
-        description=(
-            "Użyj tego narzędzia do wszystkich pytań i poleceń dotyczących opinii klientów, produktów, zgłoszeń, bugów, sentymentu, notatek ze spotkań i plików CSV. "
-            "To narzędzie potrafi analizować, podsumowywać i wyszukiwać informacje w dostarczonych dokumentach."
-        ),
+        description="Użyj tego narzędzia do wszystkich pytań i poleceń dotyczących opinii klientów, produktów, zgłoszeń, bugów, sentymentu, notatek ze spotkań i plików CSV.",
     ),
 )
 
-# --- Tworzenie Agenta ---
-agent = ReActAgent.from_tools(tools=[date_tool, document_tool], llm=Settings.llm, verbose=True, max_iterations=10)
+# --- Tworzenie Agenta z PAMIĘCIĄ ---
+# Inicjalizujemy pamięć
+if "agent_memory" not in st.session_state:
+    st.session_state.agent_memory = ChatMemoryBuffer.from_defaults(token_limit=3000)
+
+# Przekazujemy pamięć do agenta
+agent = ReActAgent.from_tools(
+    tools=[date_tool, document_tool],
+    llm=Settings.llm,
+    memory=st.session_state.agent_memory,
+    verbose=True,
+    max_iterations=10
+)
 
 # --- Logika Czatu ---
 if "messages" not in st.session_state:
