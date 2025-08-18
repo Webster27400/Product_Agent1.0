@@ -3,7 +3,6 @@ from llama_index.core import VectorStoreIndex, SimpleDirectoryReader, Settings
 from llama_index.llms.groq import Groq
 from llama_index.core.agent import ReActAgent
 from llama_index.core.tools import QueryEngineTool, ToolMetadata, FunctionTool
-# NOWY IMPORT
 from llama_index.core.memory import ChatMemoryBuffer
 import os
 from datetime import datetime
@@ -16,7 +15,7 @@ else:
     st.stop()
 
 # --- Interfejs Aplikacji Streamlit ---
-st.title("🧠 Agent z Pamięcią")
+st.title("🧠 Agent z Pamięcią v4.1")
 st.markdown("Ten agent pamięta kontekst naszej rozmowy.")
 
 language = st.sidebar.radio(
@@ -47,25 +46,22 @@ query_engine = index.as_query_engine(llm=Settings.llm)
 
 # --- Tworzenie narzędzi ---
 def get_todays_date(fake_arg: str = "") -> str:
-    """Użyj tego narzędzia TYLKO, gdy pytanie dotyczy dzisiejszej daty."""
+    """Zwraca dzisiejszą datę."""
     return datetime.now().strftime("%Y-%m-%d")
 
 date_tool = FunctionTool.from_defaults(fn=get_todays_date, name="narzedzie_do_sprawdzania_daty", description="To narzędzie służy do sprawdzania dzisiejszej daty.")
-
 document_tool = QueryEngineTool(
     query_engine=query_engine,
     metadata=ToolMetadata(
         name="analizator_dokumentow_klientow",
-        description="Użyj tego narzędzia do wszystkich pytań i poleceń dotyczących opinii klientów, produktów, zgłoszeń, bugów, sentymentu, notatek ze spotkań i plików CSV.",
+        description="Użyj tego narzędzia do wszystkich pytań i poleceń dotyczących opinii klientów, produktów, zgłoszeń, bugów, sentymentu i notatek.",
     ),
 )
 
 # --- Tworzenie Agenta z PAMIĘCIĄ ---
-# Inicjalizujemy pamięć
 if "agent_memory" not in st.session_state:
     st.session_state.agent_memory = ChatMemoryBuffer.from_defaults(token_limit=3000)
 
-# Przekazujemy pamięć do agenta
 agent = ReActAgent.from_tools(
     tools=[date_tool, document_tool],
     llm=Settings.llm,
@@ -74,9 +70,11 @@ agent = ReActAgent.from_tools(
     max_iterations=10
 )
 
-# --- Logika Czatu ---
+# --- Logika Czatu z wiadomością powitalną ---
 if "messages" not in st.session_state:
     st.session_state.messages = []
+    # Przywracamy wiadomość powitalną
+    st.session_state.messages.append({"role": "assistant", "content": "Cześć! Jestem Twoim proaktywnym asystentem. Jak mogę pomóc?"})
 
 for message in st.session_state.messages:
     with st.chat_message(message["role"]):
