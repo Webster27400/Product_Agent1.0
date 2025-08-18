@@ -15,8 +15,8 @@ else:
     st.stop()
 
 # --- Interfejs Aplikacji Streamlit ---
-st.title("🧠 Agent z Pamięcią v4.1")
-st.markdown("Ten agent pamięta kontekst naszej rozmowy.")
+st.title("💡 Agent PM v5.0")
+st.markdown("Rozpocznij rozmowę z agentem.")
 
 language = st.sidebar.radio(
     "Wybierz język odpowiedzi:",
@@ -24,8 +24,13 @@ language = st.sidebar.radio(
 )
 
 # --- Dynamiczna Konfiguracja Agenta ---
-prompt_pl = "Jesteś polskim, proaktywnym asystentem. Zawsze, bezwzględnie odpowiadaj TYLKO w języku polskim, nawet jeśli pytanie lub dane są w innym języku."
-prompt_en = "You are a proactive assistant. Always, without exception, respond ONLY in English, even if the user's question or the source data is in another language."
+# OSTATECZNA, PROFESJONALNA INSTRUKCJA SYSTEMOWA
+prompt_pl = """Jesteś ekspertem, asystentem Product Managera. Analizujesz dane i tworzysz konkretne, wykonalne zadania. 
+Każde zadanie, które tworzysz, musi być sformułowane w trybie rozkazującym (np. 'Napraw błąd...', 'Zaprojektuj widok...') i musi zawierać nazwę produktu i klienta, którego dotyczy. 
+Unikaj ogólników. Zawsze odpowiadaj TYLKO w języku polskim. Używaj formatowania Markdown."""
+prompt_en = """You are an expert Product Manager assistant. You analyze data and create specific, actionable tasks. 
+Each task you create must be an imperative command (e.g., 'Fix the bug...', 'Design the view...') and must include the relevant product and client name. 
+Avoid generalizations. Always respond ONLY in English. Use Markdown formatting."""
 
 system_prompt = prompt_pl if language == 'Polski' else prompt_en
 
@@ -70,11 +75,10 @@ agent = ReActAgent.from_tools(
     max_iterations=10
 )
 
-# --- Logika Czatu z wiadomością powitalną ---
+# --- Logika Czatu ---
 if "messages" not in st.session_state:
     st.session_state.messages = []
-    # Przywracamy wiadomość powitalną
-    st.session_state.messages.append({"role": "assistant", "content": "Cześć! Jestem Twoim proaktywnym asystentem. Jak mogę pomóc?"})
+    st.session_state.messages.append({"role": "assistant", "content": "Cześć! Jestem Twoim asystentem. Przeanalizuję dla Ciebie dane i stworzę listę zadań."})
 
 for message in st.session_state.messages:
     with st.chat_message(message["role"]):
