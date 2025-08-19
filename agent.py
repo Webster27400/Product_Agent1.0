@@ -1,11 +1,26 @@
 import streamlit as st
-from llama_index.core import VectorStoreIndex, SimpleDirectoryReader, Settings
+import os # Upewnij się, że ten import jest na górze
+
+# === BLOK DIAGNOSTYCZNY ===
+st.write("--- DIAGNOSTYKA ---")
+st.write(f"Aktualny folder roboczy skryptu: {os.getcwd()}")
+try:
+    st.write(f"Pliki w folderze roboczym: {os.listdir('.')}")
+except Exception as e:
+    st.write(f"Błąd przy listowaniu plików: {e}")
+st.write("--- KONIEC DIAGNOSTYKI ---")
+# ==========================
+
+
+# Tutaj zaczyna się reszta Twojego kodu...
+# from llama_index.core import VectorStoreIndex, SimpleDirectoryReader, Settings
+# ...itd.
+
+import streamlit as st
+from llama_index.core import VectorStoreIndex, SimpleDirectoryReader, Settings, Document
 from llama_index.llms.groq import Groq
-from llama_index.core.agent import ReActAgent
-from llama_index.core.tools import QueryEngineTool, ToolMetadata, FunctionTool
-from llama_index.core.memory import ChatMemoryBuffer
 import os
-from datetime import datetime
+import pandas as pd
 
 # --- Konfiguracja klucza API ---
 if "GROQ_API_KEY" in st.secrets:
@@ -15,111 +30,109 @@ else:
     st.stop()
 
 # --- Interfejs Aplikacji Streamlit ---
-st.title("💡 Agent Geneza (Wersja Kompletna)")
-st.markdown("Porozmawiaj z agentem o danych z domyślnych plików lub wgraj własne pliki do analizy.")
+st.title("💡 Agent Interaktywny v11.0")
+st.markdown("Agent, który uczy się na bieżąco i pomaga w nawigacji.")
 
-# --- Panel Boczny z Ustawieniami ---
+# --- Panel Boczny ---
 with st.sidebar:
     st.header("Ustawienia")
-    language = st.radio("Wybierz język odpowiedzi:", ('Polski', 'Angielski'))
-    uploaded_files = st.file_uploader(
-        "Wgraj nowe pliki do analizy (.csv, .txt)",
-        type=["csv", "txt"],
-        accept_multiple_files=True
-    )
+    # Usunęliśmy przełącznik języka, aby uprościć tę wersję i skupić się na zarządzaniu danymi
+    
+    st.header("Dodaj Nowego Klienta")
+    with st.form("new_client_form", clear_on_submit=True): # clear_on_submit=True automatycznie czyści formularz
+        client_name = st.text_input("Nazwa Klienta")
+        client_country = st.text_input("Kraj")
+        client_product = st.text_input("Produkt")
+        client_status = st.selectbox("Status Projektu", ["Planowany", "W Trakcie", "Zakończony"])
+        client_feedback = st.text_area("Feedback")
+        submitted = st.form_submit_button("Dodaj Klienta")
 
-# --- Dynamiczna Konfiguracja Agenta ---
-prompt_pl = "Jesteś ekspertem, asystentem Product Managera. Analizujesz dane i tworzysz konkretne, wykonalne zadania. Zawsze odpowiadaj TYLKO w języku polskim. Używaj formatowania Markdown."
-prompt_en = "You are an expert Product Manager assistant. You analyze data and create specific, actionable tasks. Always respond ONLY in English. Use Markdown formatting."
-system_prompt = prompt_pl if language == 'Polski' else prompt_en
-
-Settings.llm = Groq(model="llama3-70b-8192", system_prompt=system_prompt)
+# --- Konfiguracja Modeli ---
+Settings.llm = Groq(model="llama3-70b-8192", system_prompt="Jesteś precyzyjnym asystentem analitycznym. Odpowiadaj tylko na podstawie dostarczonych dokumentów. Zawsze odpowiadaj po polsku.")
 Settings.embed_model = "local:BAAI/bge-small-en-v1.5"
 
-# --- Logika Wczytywania i Łączenia Danych ---
-@st.cache_data(show_spinner="Przetwarzam i indeksuję pliki...")
-def load_and_combine_data(uploaded_file_list):
-    all_documents = []
-    
-    # Używamy nazw wgranych plików jako unikalnego klucza dla cache
-    # To zmusi Streamlit do przeliczenia indeksu, gdy lista plików się zmieni
-    file_identifiers = [f.file_id for f in uploaded_file_list]
-    
-    # 1. Wczytaj dane domyślne, jeśli nie wgrano żadnych plików
-    if not uploaded_file_list:
-        default_files = ["data.csv", "notatki.txt"]
-        existing_files = [f for f in default_files if os.path.exists(f)]
-        if existing_files:
-            reader = SimpleDirectoryReader(input_files=existing_files)
-            all_documents.extend(reader.load_data())
-    
-    # 2. Wczytaj dane z wgranych plików
-    for uploaded_file in uploaded_file_list:
-        if not os.path.exists("temp_files"):
-            os.makedirs("temp_files")
-        file_path = f"temp_files/{uploaded_file.name}"
-        with open(file_path, "wb") as f:
-            f.write(uploaded_file.getbuffer())
-        
-        reader = SimpleDirectoryReader(input_files=[file_path])
-        all_documents.extend(reader.load_data())
-        st.sidebar.success(f"Plik '{uploaded_file.name}' dodany do bazy wiedzy!")
+# --- Zarządzanie Danymi w Pamięci Aplikacji ---
+# Inicjalizujemy bazę danych w pamięci sesji, jeśli jeszcze nie istnieje
+if 'data_df' not in st.session_state:
+    try:
+        # Próbujemy wczytać domyślny plik
+        st.session_state.data_df = pd.read_csv("data.csv")
+    except FileNotFoundError:
+        # Jeśli go nie ma, tworzymy pustą ramkę danych
+        st.session_state.data_df = pd.DataFrame(columns=['Klient', 'Kraj', 'Produkt', 'StatusProjektu', 'Feedback'])
 
-    if not all_documents:
-        return None
+# Jeśli formularz został wysłany, dodajemy nowe dane do naszej bazy w pamięci
+if submitted:
+    new_data = pd.DataFrame([{
+        'Klient': client_name, 'Kraj': client_country, 'Produkt': client_product,
+        'StatusProjektu': client_status, 'Feedback': client_feedback
+    }])
+    st.session_state.data_df = pd.concat([st.session_state.data_df, new_data], ignore_index=True)
+    st.sidebar.success(f"Klient '{client_name}' został dodany do sesji!")
+    # Zapisujemy zmiany z powrotem do pliku na dysku
+    st.session_state.data_df.to_csv("data.csv", index=False, encoding='utf-8')
 
-    # 3. Zbuduj jeden, wspólny indeks
-    index = VectorStoreIndex.from_documents(all_documents)
-    return index
 
-index = load_and_combine_data(uploaded_files)
-
-# --- Tworzenie Agenta i Narzędzi (jeśli dane są dostępne) ---
-if index is not None:
+# --- Tworzenie Bazy Wiedzy Agenta (zawsze z aktualnych danych) ---
+# Konwertujemy naszą tabelę z danymi na listę dokumentów, które agent zrozumie
+docs = [Document(text=row.to_json()) for index, row in st.session_state.data_df.iterrows()]
+if docs:
+    index = VectorStoreIndex.from_documents(docs)
     query_engine = index.as_query_engine(llm=Settings.llm)
+else:
+    query_engine = None
 
-    def get_todays_date(fake_arg: str = "") -> str:
-        """Zwraca dzisiejszą datę."""
-        return datetime.now().strftime("%Y-%m-%d")
+# --- Logika Czatu ---
+if "messages" not in st.session_state:
+    st.session_state.messages = []
+    st.session_state.messages.append({"role": "assistant", "content": "Cześć! Jestem gotów do analizy Twoich danych."})
 
-    date_tool = FunctionTool.from_defaults(fn=get_todays_date, name="narzedzie_daty", description="To narzędzie służy do sprawdzania dzisiejszej daty.")
-    document_tool = QueryEngineTool(
-        query_engine=query_engine,
-        metadata=ToolMetadata(
-            name="analizator_dokumentow",
-            description="Użyj tego narzędzia do wszystkich pytań i poleceń dotyczących opinii klientów, produktów, zgłoszeń, bugów, sentymentu i notatek.",
-        ),
-    )
-    
-    if "agent_memory" not in st.session_state:
-        st.session_state.agent_memory = ChatMemoryBuffer.from_defaults(token_limit=3000)
+for message in st.session_state.messages:
+    with st.chat_message(message["role"]):
+        st.markdown(message["content"])
 
-    agent = ReActAgent.from_tools(
-        tools=[date_tool, document_tool],
-        llm=Settings.llm,
-        memory=st.session_state.agent_memory,
-        verbose=True,
-        max_iterations=10
-    )
+if prompt := st.chat_input("Twoje pytanie:"):
+    st.session_state.messages.append({"role": "user", "content": prompt})
+    with st.chat_message("user"):
+        st.markdown(prompt)
 
-    # --- Logika Czatu ---
-    if "messages" not in st.session_state:
-        st.session_state.messages = []
-        st.session_state.messages.append({"role": "assistant", "content": "Cześć! Jestem gotów do analizy. Możesz rozmawiać o domyślnych danych lub wgrać własne pliki."})
-
-    for message in st.session_state.messages:
-        with st.chat_message(message["role"]):
-            st.markdown(message["content"])
-
-    if prompt := st.chat_input("Twoje pytanie:"):
-        st.session_state.messages.append({"role": "user", "content": prompt})
-        with st.chat_message("user"):
-            st.markdown(prompt)
-
-        with st.chat_message("assistant"):
-            with st.spinner("Agent myśli... 🤔"):
-                response = agent.chat(prompt)
+    with st.chat_message("assistant"):
+        if query_engine is not None:
+            with st.spinner("Analityk myśli... 🤔"):
+                response = query_engine.query(prompt)
                 st.write(str(response))
                 st.session_state.messages.append({"role": "assistant", "content": str(response)})
+                
+                # NOWA FUNKCJONALNOŚĆ: Sugestie klientów
+                if "brak informacji" in str(response).lower() or "nie znalazłem" in str(response).lower():
+                    st.write("Nie jestem pewien, o którego klienta chodzi. Czy miałeś na myśli któregoś z poniższych?")
+                    
+                    # Tworzymy kolumny na przyciski
+                    client_list = st.session_state.data_df['Klient'].unique()
+                    cols = st.columns(len(client_list))
+                    for i, client_name in enumerate(client_list):
+                        with cols[i]:
+                            # Po kliknięciu przycisku, jego nazwa staje się nowym promptem
+                            if st.button(client_name):
+                                st.session_state.new_prompt = f"Opisz zgłoszenia dla klienta {client_name}"
+                                st.rerun() # Odświeżamy aplikację, aby przetworzyć nowy prompt
+
 else:
-    st.error("Nie można uruchomić agenta, ponieważ nie znaleziono żadnych danych do analizy.")
+    st.error("Brak danych do analizy. Dodaj nowego klienta lub upewnij się, że plik data.csv istnieje.")
+
+# Sprawdzamy, czy został wygenerowany nowy prompt z przycisku
+if "new_prompt" in st.session_state and st.session_state.new_prompt:
+    prompt_from_button = st.session_state.new_prompt
+    st.session_state.new_prompt = None  # Czyścimy, aby nie odpalać w pętli
+    
+    # Wyświetlamy go i przetwarzamy tak jak zwykły prompt
+    st.session_state.messages.append({"role": "user", "content": prompt_from_button})
+    with st.chat_message("user"):
+        st.markdown(prompt_from_button)
+    
+    with st.chat_message("assistant"):
+        if query_engine is not None:
+            with st.spinner("Analityk myśli... 🤔"):
+                response = query_engine.query(prompt_from_button)
+                st.write(str(response))
+                st.session_state.messages.append({"role": "assistant", "content": str(response)})
