@@ -1,12 +1,13 @@
 Klient,Kraj,Produkt,StatusProjektu,Feedback
-USA,Produkt X,W Trakcie,Eksport do PDF zawiesza aplikację. To krytyczny bloker dla naszego zespołu finansowego. Potrzebujemy pilnej naprawy.,Negatywny
-Niemcy,Produkt Y,Zakończony,Integracja z naszym CRM przez API była trudna. Dokumentacja jest bardzo niejasna i wymaga poprawy.,Neutralny
-Polska,Produkt X,Planowany,Czekamy na możliwość dodawania własnych tagów do projektów. To kluczowa funkcja dla naszej efektywności.,Pozytywny
-USA,Produkt Z,W Trakcie,Po ostatniej aktualizacji zniknęła opcja sortowania po dacie. To psuje wszystkie nasze automatyczne raporty.,Negatywny
-Wielka Brytania,Produkt X,Zakończony,Nowa funkcja dashboardu jest absolutnie rewelacyjna! Ułatwia nam codzienną pracę. Świetna robota!,Pozytywny
-Polska,Produkt Y,Planowany,Dla nas kluczowe jest bezpieczeństwo. Kiedy planujecie dodać logowanie dwuskładnikowe (2FA)?,Neutralny
-Niemcy,Produkt Z,Zakończony,Nie możemy znaleźć cennika dla planu Enterprise na waszej stronie. Gdzie on jest?,Pytanie
-USA,Produkt X,W Trakcie,Wersja mobilna na iOS często się psuje przy ładowaniu plików większych niż 50MB. Zgłaszamy to po raz drugi.,Negatywny
-Phoenix Digital,Kanada,Produkt Z,Planowany,"plikacja jest świetna, ale brak trybu ciemnego (dark mode) jest dużym minusem dla naszego zespołu pracującego w nocy."
- Vortex Solutions,Niemcy,Produkt Y,W Trakcie,Pilnie potrzebujemy informacji o możliwościach audytu bezpieczeństwa i zgodności z RODO.
-TechSolutions Inc,Stany Zjednoczone,Produkt C,Planowany,System zarządzania danymi w chmurze spełnił nasze oczekiwania. Doskonała obsługa klienta i szybkie wsparcie techniczne
+USA,Produkt X,W Trakcie,Eksport do PDF zawiesza aplikację. To krytyczny bloker.,Negatywny
+Niemcy,Produkt Y,Zakończony,Integracja z API była trudna. Dokumentacja niejasna.,Neutralny
+Polska,Produkt X,Planowany,Czekamy na możliwość dodawania własnych tagów.,Pozytywny
+USA,Produkt Z,W Trakcie,Zniknęła opcja sortowania po dacie.,Negatywny
+Wielka Brytania,Produkt X,Zakończony,Nowa funkcja dashboardu jest rewelacyjna!,Pozytywny
+Polska,Produkt Y,Planowany,Kiedy dodacie logowanie dwuskładnikowe (2FA)?,Neutralny
+Niemcy,Produkt Z,Zakończony,Nie możemy znaleźć cennika dla planu Enterprise.,Pytanie
+USA,Produkt X,W Trakcie,Wersja mobilna na iOS często się psuje.,Negatywny
+Kanada,Produkt Z,Planowany,Brak trybu ciemnego (dark mode) jest minusem.,
+Niemcy,Produkt Y,W Trakcie,Pilnie potrzebujemy informacji o audycie bezpieczeństwa i RODO.,
+Stany Zjednoczone,Produkt C,Planowany,System zarządzania danymi spełnił nasze oczekiwania.,
+Stellar Dynamics,USA,Produkt Alfa,W Trakcie,Potrzebujemy pilnie demonstracji zaawansowanego modułu analitycznego. Prosimy o kontakt.

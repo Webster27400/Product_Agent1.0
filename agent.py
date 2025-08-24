@@ -1,11 +1,7 @@
 import streamlit as st
 from llama_index.core import VectorStoreIndex, Settings, Document
 from llama_index.llms.groq import Groq
-from llama_index.core.agent import ReActAgent
-from llama_index.core.tools import QueryEngineTool, ToolMetadata, FunctionTool
-from llama_index.core.memory import ChatMemoryBuffer
 import os
-from datetime import datetime
 import pandas as pd
 
 # --- Konfiguracja klucza API ---
@@ -16,10 +12,9 @@ else:
     st.stop()
 
 # --- Interfejs Aplikacji Streamlit ---
-st.title("💡 Agent Sekretarz (Wersja Stabilna)")
-st.markdown("Zarządzaj bazą wiedzy i rozmawiaj z agentem.")
+st.title("💡 Agent Analityczny v1.0")
 
-# --- Panel Boczny z Ustawieniami i Formularzem ---
+# --- Panel Boczny ---
 with st.sidebar:
     st.header("Ustawienia")
     language = st.radio("Wybierz język odpowiedzi:", ('Polski', 'Angielski'))
@@ -31,58 +26,46 @@ with st.sidebar:
         client_product = st.text_input("Produkt")
         client_status = st.selectbox("Status Projektu", ["Planowany", "W Trakcie", "Zakończony", "Pytanie"])
         client_feedback = st.text_area("Feedback")
-        submitted = st.form_submit_button("Dodaj Klienta")
+        submitted = st.form_submit_button("Dodaj Klienta do data.csv")
 
-# --- Zarządzanie Danymi w Pamięci Aplikacji (Nowa, Stabilna Logika) ---
-if 'data_df' not in st.session_state:
+# --- Zarządzanie Danymi (Nowa, Niezawodna Logika) ---
+@st.cache_data
+def load_data():
     try:
-        # Próbujemy wczytać domyślny plik tylko raz, przy pierwszym uruchomieniu
-        st.session_state.data_df = pd.read_csv("data.csv")
+        return pd.read_csv("data.csv")
     except FileNotFoundError:
-        st.session_state.data_df = pd.DataFrame(columns=['Klient', 'Kraj', 'Produkt', 'StatusProjektu', 'Feedback'])
+        return pd.DataFrame(columns=['Klient', 'Kraj', 'Produkt', 'StatusProjektu', 'Feedback'])
 
-# Jeśli formularz został wysłany, dodajemy nowe dane do naszej bazy w pamięci
+data_df = load_data()
+
 if submitted:
     new_data = pd.DataFrame([{"Klient": client_name, "Kraj": client_country, "Produkt": client_product, "StatusProjektu": client_status, "Feedback": client_feedback}])
-    st.session_state.data_df = pd.concat([st.session_state.data_df, new_data], ignore_index=True)
-    st.sidebar.success(f"Klient '{client_name}' dodany do bieżącej sesji!")
-    # Opcjonalnie: zapisujemy zmiany z powrotem do pliku na dysku
-    st.session_state.data_df.to_csv("data.csv", index=False, encoding='utf-8')
+    data_df = pd.concat([data_df, new_data], ignore_index=True)
+    data_df.to_csv("data.csv", index=False, encoding='utf-8')
+    st.cache_data.clear()
+    st.rerun()
 
-# --- Konfiguracja i Budowa Agenta (zawsze na aktualnych danych) ---
-prompt_pl = "Jesteś ekspertem, asystentem Product Managera. Analizujesz dane i tworzysz konkretne, wykonalne zadania. Zawsze odpowiadaj TYLKO w języku polskim. Używaj formatowania Markdown."
-prompt_en = "You are an expert Product Manager assistant. You analyze data and create specific, actionable tasks. Always respond ONLY in English. Use Markdown formatting."
+# --- Konfiguracja i Budowa Agenta ---
+prompt_pl = "Jesteś precyzyjnym asystentem analitycznym. Twoim zadaniem jest odpowiadanie na pytania wyłącznie na podstawie dostarczonego kontekstu. Jeśli odpowiedź nie znajduje się w kontekście, odpowiedz: 'Nie znalazłem tej informacji w danych'. Nie zgaduj. Zawsze odpowiadaj TYLKO po polsku."
+prompt_en = "You are a precise analytical assistant. Your task is to answer questions solely based on the provided context. If the answer is not in the context, respond with: 'I did not find this information in the data'. Do not guess. Always respond ONLY in English."
+
 system_prompt = prompt_pl if language == 'Polski' else prompt_en
 
 Settings.llm = Groq(model="llama3-70b-8192", system_prompt=system_prompt)
 Settings.embed_model = "local:BAAI/bge-small-en-v1.5"
 
-# Tworzymy bazę wiedzy z danych w pamięci sesji
-docs = [Document(text=row.to_json()) for index, row in st.session_state.data_df.iterrows()]
+docs = [Document(text=row.to_json()) for index, row in data_df.iterrows()]
 if not docs:
-    st.warning("Baza wiedzy jest pusta. Dodaj klienta za pomocą formularza lub upewnij się, że plik data.csv istnieje.")
+    st.warning("Baza wiedzy jest pusta. Dodaj klienta lub upewnij się, że plik data.csv istnieje.")
     st.stop()
 
 index = VectorStoreIndex.from_documents(docs)
 query_engine = index.as_query_engine(llm=Settings.llm)
 
-# Tworzenie narzędzi
-def get_todays_date(fake_arg: str = "") -> str:
-    """Zwraca dzisiejszą datę."""
-    return datetime.now().strftime("%Y-%m-%d")
-
-date_tool = FunctionTool.from_defaults(fn=get_todays_date, name="narzedzie_daty")
-document_tool = QueryEngineTool(query_engine=query_engine, metadata=ToolMetadata(name="analizator_danych", description="Użyj tego narzędzia do wszystkich pytań i poleceń dotyczących opinii klientów, produktów i notatek."))
-    
-if "agent_memory" not in st.session_state:
-    st.session_state.agent_memory = ChatMemoryBuffer.from_defaults(token_limit=3000)
-
-agent = ReActAgent.from_tools(tools=[date_tool, document_tool], llm=Settings.llm, memory=st.session_state.agent_memory, verbose=True)
-
 # --- Logika Czatu ---
 if "messages" not in st.session_state:
     st.session_state.messages = []
-    st.session_state.messages.append({"role": "assistant", "content": "Cześć! Jestem gotów do analizy."})
+    st.session_state.messages.append({"role": "assistant", "content": "Cześć! Jestem gotów do analizy Twoich danych."})
 
 for message in st.session_state.messages:
     with st.chat_message(message["role"]):
@@ -95,6 +78,6 @@ if prompt := st.chat_input("Twoje pytanie:"):
 
     with st.chat_message("assistant"):
         with st.spinner("Agent myśli... 🤔"):
-            response = agent.chat(prompt)
+            response = query_engine.query(prompt)
             st.write(str(response))
             st.session_state.messages.append({"role": "assistant", "content": str(response)})
