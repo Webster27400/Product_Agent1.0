@@ -1,9 +1,10 @@
 Klient,Kraj,Produkt,StatusProjektu,Feedback
-"Alpha Corp","USA","Produkt X","W Trakcie","Eksport do PDF zawiesza aplikację. To krytyczny bloker dla naszego zespołu finansowego. Potrzebujemy pilnej naprawy.","Negatywny"
-"Beta Solutions","Niemcy","Produkt Y","Zakończony","Integracja z naszym CRM przez API była trudna. Dokumentacja jest bardzo niejasna i wymaga poprawy.","Neutralny"
-"Gamma Inc.","Polska","Produkt X","Planowany","Czekamy na możliwość dodawania własnych tagów do projektów. To kluczowa funkcja dla naszej efektywności.","Pozytywny"
-"Delta Services","USA","Produkt Z","W Trakcie","Po ostatniej aktualizacji zniknęła opcja sortowania po dacie. To psuje wszystkie nasze automatyczne raporty.","Negatywny"
-"Epsilon LLC","Wielka Brytania","Produkt X","Zakończony","Nowa funkcja dashboardu jest absolutnie rewelacyjna! Ułatwia nam codzienną pracę. Świetna robota!","Pozytywny"
-"Zeta Systems","Polska","Produkt Y","Planowany","Dla nas kluczowe jest bezpieczeństwo. Kiedy planujecie dodać logowanie dwuskładnikowe (2FA)?","Neutralny"
-"Omega Group","Niemcy","Produkt Z","Zakończony","Nie możemy znaleźć cennika dla planu Enterprise na waszej stronie. Gdzie on jest?","Pytanie"
-"Sigma Tech","USA","Produkt X","W Trakcie","Wersja mobilna na iOS często się psuje przy ładowaniu plików większych niż 50MB. Zgłaszamy to po raz drugi.","Negatywny"
+USA,Produkt X,W Trakcie,Eksport do PDF zawiesza aplikację. To krytyczny bloker dla naszego zespołu finansowego. Potrzebujemy pilnej naprawy.,Negatywny
+Niemcy,Produkt Y,Zakończony,Integracja z naszym CRM przez API była trudna. Dokumentacja jest bardzo niejasna i wymaga poprawy.,Neutralny
+Polska,Produkt X,Planowany,Czekamy na możliwość dodawania własnych tagów do projektów. To kluczowa funkcja dla naszej efektywności.,Pozytywny
+USA,Produkt Z,W Trakcie,Po ostatniej aktualizacji zniknęła opcja sortowania po dacie. To psuje wszystkie nasze automatyczne raporty.,Negatywny
+Wielka Brytania,Produkt X,Zakończony,Nowa funkcja dashboardu jest absolutnie rewelacyjna! Ułatwia nam codzienną pracę. Świetna robota!,Pozytywny
+Polska,Produkt Y,Planowany,Dla nas kluczowe jest bezpieczeństwo. Kiedy planujecie dodać logowanie dwuskładnikowe (2FA)?,Neutralny
+Niemcy,Produkt Z,Zakończony,Nie możemy znaleźć cennika dla planu Enterprise na waszej stronie. Gdzie on jest?,Pytanie
+USA,Produkt X,W Trakcie,Wersja mobilna na iOS często się psuje przy ładowaniu plików większych niż 50MB. Zgłaszamy to po raz drugi.,Negatywny
+Phoenix Digital,Kanada,Produkt Z,Planowany,"plikacja jest świetna, ale brak trybu ciemnego (dark mode) jest dużym minusem dla naszego zespołu pracującego w nocy."
